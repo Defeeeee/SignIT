@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors — Wizz-style system: black/white editorial + one blue accent */
+  --color-volt-blue: #06167c;
+  --color-volt-blue-hover: #0a1e9e;
+  --color-obsidian: #000000;
+  --color-paper: #ffffff;
+  --color-ash: #dadada;
+  --color-charcoal: #444444;
+  --color-onyx: #292929;
+  --color-mist: #eeeeee;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-archivo-black), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: 0 1px 10px 0 rgba(0, 0, 0, 0.05);
+  --shadow-cta: 0 1px 30px 0 rgba(6, 22, 124, 0.35);
+
+  --radius-buttons: 12px;
+  --radius-inputs: 12px;
+  --radius-cards: 12px;
+  --radius-images: 24px;
+  --radius-pill: 999px;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-obsidian);
+}
+
+::selection {
+  background: var(--color-volt-blue);
+  color: var(--color-paper);
+}
