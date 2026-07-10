@@ -207,6 +207,12 @@ export const clipRouter = router({
         interpretacion: {
           include: { video: true, usuario: { select: { handle: true, nombre: true } } },
         },
+        takes: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          include: { keypoints: true },
+        },
+        huecos: true,
       },
     });
   }),

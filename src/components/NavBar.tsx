@@ -49,6 +49,16 @@ export function NavBar() {
                 Estudio
               </Link>
             )}
+            {(session?.user.rol === "MODERADOR" || session?.user.rol === "ADMIN") && (
+              <Link
+                href="/moderacion"
+                className={`rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                  pathname === "/moderacion" ? "bg-white/10 text-white" : "text-white/70 hover:text-white"
+                }`}
+              >
+                Moderación
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
