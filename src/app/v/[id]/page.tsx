@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/server/db";
+import { Comentarios } from "./Comentarios";
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -83,6 +84,8 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
           ))}
         </ul>
       )}
+
+      <Comentarios videoId={video.id} />
     </div>
   );
 }
