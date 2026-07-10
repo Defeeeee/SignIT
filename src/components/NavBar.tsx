@@ -70,6 +70,14 @@ export function NavBar() {
                 >
                   @{session.user.handle}
                 </Link>
+                <Link
+                  href="/ajustes"
+                  className={`hidden sm:inline rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                    pathname === "/ajustes" ? "bg-white/10 text-white" : "text-white/70 hover:text-white"
+                  }`}
+                >
+                  Ajustes
+                </Link>
                 <button
                   onClick={() => signOut()}
                   className="rounded-full bg-onyx px-4 py-1.5 text-[14px] font-medium text-white transition-colors hover:bg-white/20"
