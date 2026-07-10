@@ -11,8 +11,8 @@
   --color-onyx: #292929;
   --color-mist: #eeeeee;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-archivo-black), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-nunito), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --shadow-card: 0 1px 10px 0 rgba(0, 0, 0, 0.05);
   --shadow-cta: 0 1px 30px 0 rgba(6, 22, 124, 0.35);
@@ -27,6 +27,10 @@
 body {
   background: var(--color-paper);
   color: var(--color-obsidian);
+}
+
+.font-display {
+  font-weight: 900;
 }
 
 ::selection {
