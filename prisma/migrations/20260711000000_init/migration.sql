@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "Rol" AS ENUM ('USUARIO', 'MODERADOR', 'ADMIN');
 
@@ -36,8 +39,8 @@ CREATE TABLE "usuarios" (
     "rol" "Rol" NOT NULL DEFAULT 'USUARIO',
     "senanteVerificado" BOOLEAN NOT NULL DEFAULT false,
     "region" TEXT,
-    "storageUsedBytes" BIGINT NOT NULL DEFAULT 0,
-    "storageQuotaBytes" BIGINT NOT NULL DEFAULT 21474836480,
+    "storageUsedMb" INTEGER NOT NULL DEFAULT 0,
+    "storageQuotaMb" INTEGER NOT NULL DEFAULT 20000,
     "consentimientoDataset" BOOLEAN NOT NULL DEFAULT false,
     "consentimientoBiometria" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -372,3 +375,4 @@ ALTER TABLE "Reporte" ADD CONSTRAINT "Reporte_videoId_fkey" FOREIGN KEY ("videoI
 
 -- AddForeignKey
 ALTER TABLE "Reporte" ADD CONSTRAINT "Reporte_clipId_fkey" FOREIGN KEY ("clipId") REFERENCES "Clip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
