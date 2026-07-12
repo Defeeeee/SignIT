@@ -12,10 +12,6 @@ echo "==> node $(node -v)"
 APP_DIR="/home/ubuntu/signit"
 cd "$APP_DIR"
 
-echo "==> git reset a origin/main"
-git fetch origin main
-git reset --hard origin/main
-
 echo "==> npm ci"
 npm ci
 
