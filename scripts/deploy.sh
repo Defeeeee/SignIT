@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# SSH no-interactivo no carga .bashrc, así que nvm nunca se activa solo y
+# caemos al Node del sistema (viejo). Lo cargamos a mano.
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm use default >/dev/null
+
+echo "==> node $(node -v)"
+
 APP_DIR="/home/ubuntu/signit"
 cd "$APP_DIR"
 
