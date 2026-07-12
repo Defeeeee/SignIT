@@ -40,7 +40,9 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
         <div className="aspect-video w-full rounded-[24px] overflow-hidden shadow-[0_0_0_1px_var(--color-ash)] mb-10">
           <iframe
             className="w-full h-full"
-            src={`https://www.youtube.com/embed/${video.youtubeId}`}
+            // el parámetro origin es necesario: sin él YouTube no puede validar
+            // el dominio embebiendo y tira Error 153 ("Watch on YouTube")
+            src={`https://www.youtube.com/embed/${video.youtubeId}?origin=${encodeURIComponent(process.env.AUTH_URL ?? "http://localhost:3000")}`}
             title={video.titulo}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
