@@ -63,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   providers,
+  trustHost: true, // detrás de Traefik en producción; confía en X-Forwarded-Host
   session: { strategy: "database" },
   pages: {
     signIn: "/login",

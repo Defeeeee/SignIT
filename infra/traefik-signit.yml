@@ -1,0 +1,20 @@
+# Plantilla de config dinámica de Traefik para exponer SignIT (pm2, puerto 8711)
+# detrás de Traefik. Ajustar dominio, entryPoint y certResolver a como esté
+# configurado el Traefik de este server, y copiar al directorio que Traefik
+# lee como "file provider" (ej. /etc/traefik/dynamic/signit.yml).
+
+http:
+  routers:
+    signit:
+      rule: "Host(`signit.tudominio.com`)" # reemplazar por el dominio real
+      service: signit
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt # reemplazar por el nombre del resolver ya configurado
+
+  services:
+    signit:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8711"
