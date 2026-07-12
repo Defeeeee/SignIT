@@ -6,15 +6,26 @@
 http:
   routers:
     signit:
-      rule: "Host(`signit.tudominio.com`)" # reemplazar por el dominio real
+      rule: "Host(`signit.signai.ar`)"
       service: signit
       entryPoints:
         - websecure
       tls:
         certResolver: letsencrypt # reemplazar por el nombre del resolver ya configurado
+      middlewares:
+        - signit-headers
 
   services:
     signit:
       loadBalancer:
         servers:
           - url: "http://127.0.0.1:8711"
+
+  middlewares:
+    # Si hay un middleware de headers compartido con otras apps del server
+    # (el que está mandando Referrer-Policy: same-origin y rompe el embed
+    # de YouTube — Error 153), este override reemplaza ese valor solo para
+    # el router de signit sin tocar el middleware compartido ni las otras apps.
+    signit-headers:
+      headers:
+        referrerPolicy: "strict-origin-when-cross-origin"
