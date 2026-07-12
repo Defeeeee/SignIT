@@ -4,6 +4,7 @@ import Nodemailer from "next-auth/providers/nodemailer";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/server/db";
 import { generateUniqueHandle } from "@/server/handle";
+import { magicLinkEmailHtml, magicLinkEmailText } from "@/server/email-templates";
 
 const providers = [];
 
@@ -33,9 +34,9 @@ providers.push(
       await transport.sendMail({
         to: identifier,
         from: process.env.EMAIL_FROM,
-        subject: "Iniciar sesión en SignIT",
-        text: `Ingresá a SignIT: ${url}`,
-        html: `<p><a href="${url}">Ingresar a SignIT</a></p>`,
+        subject: "Tu acceso a SignIT",
+        text: magicLinkEmailText(url),
+        html: magicLinkEmailHtml(url),
       });
     },
   }),
@@ -67,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "database" },
   pages: {
     signIn: "/login",
+    verifyRequest: "/verificar-email",
   },
   callbacks: {
     async session({ session, user }) {
