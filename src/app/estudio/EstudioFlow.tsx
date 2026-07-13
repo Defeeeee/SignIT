@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/trpc/client";
 
 type Paso = "video" | "interpretacion" | "clip" | "take" | "listo";
@@ -26,9 +26,181 @@ function StepLabel({ n, children }: { n: number; children: React.ReactNode }) {
   );
 }
 
+// Referencia del video original mientras se graba (spec 4.2.2). Es el embed
+// estándar de YouTube: el control de velocidad (0.5x/0.75x/1x) queda
+// disponible vía el menú nativo del player (⚙) hasta que se integre la
+// IFrame JS API para sincronización fina.
+function VideoDeReferencia({ youtubeId }: { youtubeId: string }) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return (
+    <div className="aspect-video w-full max-w-sm rounded-xl overflow-hidden shadow-[0_0_0_1px_var(--color-ash)]">
+      <iframe
+        className="w-full h-full"
+        src={`https://www.youtube.com/embed/${youtubeId}?origin=${encodeURIComponent(origin)}`}
+        title="Video original"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
+type EstadoCamara = "inicial" | "grabando" | "grabado" | "subiendo" | "error";
+
+// Captura real de cámara/mic (spec 6.1: MediaRecorder) y subida del take al
+// storage del server (6.3 paso 1). El pipeline de procesamiento se dispara
+// después, desde clip.subirTake, con la URL que este componente devuelve.
+function CamaraGrabador({
+  clipId,
+  onArchivoListo,
+}: {
+  clipId: string;
+  onArchivoListo: (url: string) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const [estado, setEstado] = useState<EstadoCamara>("inicial");
+  const [error, setError] = useState<string | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function empezarGrabacion() {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+
+      const mimeType = ["video/webm;codecs=vp8,opus", "video/webm"].find(
+        (t) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(t),
+      );
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const grabado = new Blob(chunksRef.current, { type: recorder.mimeType || "video/webm" });
+        setBlob(grabado);
+        setPreviewUrl(URL.createObjectURL(grabado));
+        stream.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        setEstado("grabado");
+      };
+      recorderRef.current = recorder;
+      recorder.start();
+      setEstado("grabando");
+    } catch (err) {
+      setError(
+        err instanceof DOMException && err.name === "NotAllowedError"
+          ? "Necesitamos permiso de cámara y micrófono para grabar."
+          : "No se pudo acceder a la cámara.",
+      );
+      setEstado("error");
+    }
+  }
+
+  function detenerGrabacion() {
+    recorderRef.current?.stop();
+  }
+
+  function descartar() {
+    setBlob(null);
+    setPreviewUrl(null);
+    setEstado("inicial");
+  }
+
+  async function subir() {
+    if (!blob) return;
+    setEstado("subiendo");
+    setError(null);
+    try {
+      const res = await fetch(`/api/uploads/take?clipId=${encodeURIComponent(clipId)}`, {
+        method: "POST",
+        headers: { "Content-Type": blob.type || "video/webm" },
+        body: blob,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}) as { error?: string });
+        throw new Error(body.error ?? `Error ${res.status} subiendo el archivo`);
+      }
+      const { url } = (await res.json()) as { url: string };
+      onArchivoListo(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error subiendo el archivo");
+      setEstado("grabado");
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {estado === "grabado" && previewUrl ? (
+        <video
+          src={previewUrl}
+          controls
+          playsInline
+          className="w-full max-w-sm aspect-video rounded-xl bg-obsidian object-cover"
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          className="w-full max-w-sm aspect-video rounded-xl bg-obsidian object-cover"
+        />
+      )}
+
+      {error && <p className="text-[12px] text-volt-blue">{error}</p>}
+
+      <div className="flex items-center gap-2.5">
+        {(estado === "inicial" || estado === "error") && (
+          <button onClick={empezarGrabacion} className={primaryBtn}>
+            Empezar a grabar
+          </button>
+        )}
+        {estado === "grabando" && (
+          <button onClick={detenerGrabacion} className={secondaryBtn}>
+            Detener
+          </button>
+        )}
+        {estado === "grabado" && (
+          <>
+            <button onClick={subir} className={primaryBtn}>
+              Subir take
+            </button>
+            <button onClick={descartar} className={ghostBtn}>
+              Descartar y regrabar
+            </button>
+          </>
+        )}
+        {estado === "subiendo" && <p className="text-[14px] text-charcoal">Subiendo…</p>}
+      </div>
+    </div>
+  );
+}
+
 export function EstudioFlow() {
   const [paso, setPaso] = useState<Paso>("video");
   const [videoId, setVideoId] = useState<string | null>(null);
+  const [videoYoutubeId, setVideoYoutubeId] = useState<string | null>(null);
   const [interpretacionId, setInterpretacionId] = useState<string | null>(null);
   const [clipId, setClipId] = useState<string | null>(null);
 
@@ -39,6 +211,7 @@ export function EstudioFlow() {
   const crearVideo = trpc.video.crear.useMutation({
     onSuccess: (v) => {
       setVideoId(v.id);
+      setVideoYoutubeId(v.youtubeId);
       setPaso("interpretacion");
     },
   });
@@ -77,6 +250,7 @@ export function EstudioFlow() {
                   <button
                     onClick={() => {
                       setVideoId(v.id);
+                      setVideoYoutubeId(v.youtubeId);
                       setPaso("interpretacion");
                     }}
                     className="text-left w-full rounded-xl bg-mist px-3.5 py-2.5 text-[14px] font-medium transition-colors hover:bg-volt-blue/10"
@@ -174,21 +348,24 @@ export function EstudioFlow() {
       {paso === "take" && clipId && (
         <div className={cardClass}>
           <StepLabel n={4}>Grabación</StepLabel>
-          <p className="text-[13px] text-charcoal mb-4 leading-[1.5]">
-            Todavía no hay captura de cámara real conectada. Este botón simula la subida de un
-            take y corre el pipeline de procesamiento (stub local de keypoints/avatar).
-          </p>
-          <button disabled={subirTake.isPending} onClick={() =>
-              subirTake.mutate({
-                clipId,
-                archivoCrudoUrl: `local-fake://take/${Date.now()}.webm`,
-                rangoInicio: tInicio,
-                rangoFin: tFin,
-              })
-            } className={primaryBtn}
-          >
-            Simular take
-          </button>
+          <div className="flex flex-wrap gap-5 mb-5">
+            {videoYoutubeId && <VideoDeReferencia youtubeId={videoYoutubeId} />}
+            <CamaraGrabador
+              clipId={clipId}
+              onArchivoListo={(url) =>
+                subirTake.mutate({
+                  clipId,
+                  archivoCrudoUrl: url,
+                  rangoInicio: tInicio,
+                  rangoFin: tFin,
+                })
+              }
+            />
+          </div>
+          {subirTake.error && (
+            <p className="text-[12px] text-volt-blue mb-3">{subirTake.error.message}</p>
+          )}
+          {subirTake.isPending && <p className="text-[14px] text-charcoal mb-3">Procesando take…</p>}
 
           {subirTake.data && (
             <div className="mt-5 pt-5 border-t border-ash space-y-3">

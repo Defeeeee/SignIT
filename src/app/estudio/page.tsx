@@ -15,9 +15,9 @@ export default async function EstudioPage() {
         Estudio de grabación
       </h1>
       <p className="text-charcoal text-[15px] mb-10 max-w-xl leading-[1.5]">
-        Esta versión ejercita el flujo de datos completo (interpretación → clip → take →
-        pipeline de procesamiento → validación → revisión); la captura de cámara real y el
-        render del avatar en WebGL todavía no están conectados.
+        Flujo completo: interpretación → clip → grabación con cámara real → pipeline de
+        procesamiento → validación → revisión. El render del avatar en WebGL todavía no está
+        conectado (el modo &quot;Avatar&quot; guarda el take pero se ve como video real).
       </p>
       <EstudioFlow />
     </div>
