@@ -39,7 +39,10 @@ export async function POST(req: NextRequest) {
   }
 
   const contentType = req.headers.get("content-type") ?? "";
-  const extension = TIPOS_PERMITIDOS[contentType];
+  // El browser manda parámetros extra (ej. "video/webm;codecs=vp8,opus");
+  // solo el tipo base define qué formato de archivo estamos guardando.
+  const tipoBase = contentType.split(";")[0].trim();
+  const extension = TIPOS_PERMITIDOS[tipoBase];
   if (!extension) {
     return NextResponse.json({ error: `Content-Type no soportado: ${contentType}` }, { status: 415 });
   }
