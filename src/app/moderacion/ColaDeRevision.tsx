@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { inferRouterOutputs } from "@trpc/server";
 import { trpc } from "@/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
+import { urlReproducible } from "@/lib/media";
 
 type Clip = inferRouterOutputs<AppRouter>["clip"]["colaDeRevision"][number];
 
@@ -28,6 +29,7 @@ function ClipCard({
   const vencido = horas > 24;
   const confidence = clip.takes[0]?.keypoints?.confidenceScore;
   const huecosAbiertos = clip.huecos.filter((h) => h.estado === "DETECTADO").length;
+  const videoUrl = urlReproducible(clip.takes[0]?.archivoRenderUrl ?? clip.takes[0]?.archivoCrudoUrl);
 
   return (
     <li className="rounded-xl bg-white p-5 shadow-[0_0_0_1px_var(--color-ash)]">
@@ -53,6 +55,19 @@ function ClipCard({
           {horas < 1 ? "hace <1h" : `hace ${Math.floor(horas)}h`}
         </span>
       </div>
+
+      {videoUrl ? (
+        <video
+          src={videoUrl}
+          controls
+          playsInline
+          className="mt-4 w-full max-w-xs aspect-video rounded-lg bg-obsidian object-cover"
+        />
+      ) : (
+        <div className="mt-4 flex w-full max-w-xs aspect-video items-center justify-center rounded-lg bg-mist text-[12px] text-charcoal">
+          Sin preview disponible
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-4 text-[13px] text-charcoal">
         <span>

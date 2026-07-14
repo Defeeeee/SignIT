@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { LikeButton } from "@/components/LikeButton";
+import { urlReproducible } from "@/lib/media";
 import { Comentarios } from "./Comentarios";
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,7 +19,14 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             clips: {
               where: { estado: "PUBLICADO" },
               orderBy: { tInicio: "asc" },
-              include: { _count: { select: { likes: true } } },
+              include: {
+                _count: { select: { likes: true } },
+                takes: {
+                  orderBy: { createdAt: "desc" },
+                  take: 1,
+                  select: { archivoCrudoUrl: true, archivoRenderUrl: true },
+                },
+              },
             },
           },
         },
@@ -107,20 +115,37 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               </p>
 
               {it.clips.length > 0 && (
-                <ul className="mt-3 pt-3 border-t border-ash space-y-2">
-                  {it.clips.map((c) => (
-                    <li key={c.id} className="flex items-center justify-between gap-3">
-                      <span className="text-[12px] text-charcoal tabular-nums">
-                        {c.tInicio.toFixed(0)}s–{c.tFin.toFixed(0)}s
-                      </span>
-                      <LikeButton
-                        clipId={c.id}
-                        meGustaInicial={clipIdsLikeados.has(c.id)}
-                        totalInicial={c._count.likes}
-                        logueado={!!session?.user}
-                      />
-                    </li>
-                  ))}
+                <ul className="mt-3 pt-3 border-t border-ash grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {it.clips.map((c) => {
+                    const videoUrl = urlReproducible(c.takes[0]?.archivoRenderUrl ?? c.takes[0]?.archivoCrudoUrl);
+                    return (
+                      <li key={c.id}>
+                        {videoUrl ? (
+                          <video
+                            src={videoUrl}
+                            controls
+                            playsInline
+                            className="w-full aspect-video rounded-lg bg-obsidian object-cover"
+                          />
+                        ) : (
+                          <div className="flex aspect-video items-center justify-center rounded-lg bg-mist text-[11px] text-charcoal text-center px-2">
+                            Sin preview disponible
+                          </div>
+                        )}
+                        <div className="mt-1.5 flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-charcoal tabular-nums">
+                            {c.tInicio.toFixed(0)}s–{c.tFin.toFixed(0)}s
+                          </span>
+                          <LikeButton
+                            clipId={c.id}
+                            meGustaInicial={clipIdsLikeados.has(c.id)}
+                            totalInicial={c._count.likes}
+                            logueado={!!session?.user}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </li>
