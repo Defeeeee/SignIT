@@ -5,6 +5,8 @@ import { interpretacionRouter } from "./interpretacion";
 import { clipRouter } from "./clip";
 import { pedidoRouter } from "./pedido";
 import { comentarioRouter } from "./comentario";
+import { followRouter } from "./follow";
+import { likeRouter } from "./like";
 
 export const appRouter = router({
   usuario: usuarioRouter,
@@ -13,6 +15,8 @@ export const appRouter = router({
   clip: clipRouter,
   pedido: pedidoRouter,
   comentario: comentarioRouter,
+  follow: followRouter,
+  like: likeRouter,
 });
 
 export type AppRouter = typeof appRouter;

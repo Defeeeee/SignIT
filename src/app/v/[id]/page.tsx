@@ -1,24 +1,47 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/server/db";
+import { auth } from "@/server/auth";
+import { LikeButton } from "@/components/LikeButton";
 import { Comentarios } from "./Comentarios";
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const video = await db.video.findUnique({
-    where: { id },
-    include: {
-      interpretaciones: {
-        include: {
-          usuario: { select: { handle: true, nombre: true } },
-          clips: { where: { estado: "PUBLICADO" }, orderBy: { tInicio: "asc" } },
+  const [video, session] = await Promise.all([
+    db.video.findUnique({
+      where: { id },
+      include: {
+        interpretaciones: {
+          include: {
+            usuario: { select: { handle: true, nombre: true } },
+            clips: {
+              where: { estado: "PUBLICADO" },
+              orderBy: { tInicio: "asc" },
+              include: { _count: { select: { likes: true } } },
+            },
+          },
         },
       },
-    },
-  });
+    }),
+    auth(),
+  ]);
 
   if (!video) notFound();
+
+  const clipIdsLikeados = session?.user
+    ? new Set(
+        (
+          await db.like.findMany({
+            where: {
+              usuarioId: session.user.id,
+              clipId: { in: video.interpretaciones.flatMap((it) => it.clips.map((c) => c.id)) },
+            },
+            select: { clipId: true },
+          })
+        ).map((l) => l.clipId),
+      )
+    : new Set<string>();
 
   const duracion = video.duracionSegundos;
   const coberturaPorInterprete = video.interpretaciones.map((it) => {
@@ -82,6 +105,24 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               <p className="text-[12px] text-charcoal mt-1.5">
                 {pct.toFixed(0)}% cubierto · {it.clips.length} clip(s) publicados
               </p>
+
+              {it.clips.length > 0 && (
+                <ul className="mt-3 pt-3 border-t border-ash space-y-2">
+                  {it.clips.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3">
+                      <span className="text-[12px] text-charcoal tabular-nums">
+                        {c.tInicio.toFixed(0)}s–{c.tFin.toFixed(0)}s
+                      </span>
+                      <LikeButton
+                        clipId={c.id}
+                        meGustaInicial={clipIdsLikeados.has(c.id)}
+                        totalInicial={c._count.likes}
+                        logueado={!!session?.user}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
