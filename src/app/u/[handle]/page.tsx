@@ -3,6 +3,17 @@ import Link from "next/link";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { SeguirButton } from "@/components/SeguirButton";
+import { EliminarClipButton } from "@/components/EliminarClipButton";
+import { urlReproducible } from "@/lib/media";
+
+const ESTADO_LABEL: Record<string, string> = {
+  GRABANDO: "Grabando",
+  BORRADOR: "Borrador",
+  VALIDADO: "Validado",
+  EN_REVISION: "En revisión",
+  PUBLICADO: "Publicado",
+  RECHAZADO: "Rechazado",
+};
 
 export default async function PerfilPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -35,6 +46,25 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
           }),
         )
       : false;
+
+  // El dueño ve todos sus clips (incluidos borradores/rechazados, spec 2:
+  // "borrador 100% privado"); cualquier otro visitante solo ve lo publicado.
+  const clips = await db.clip.findMany({
+    where: {
+      interpretacion: { usuarioId: usuario.id },
+      ...(esUnoMismo ? {} : { estado: "PUBLICADO" }),
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      interpretacion: { include: { video: { select: { id: true, titulo: true } } } },
+      _count: { select: { likes: true } },
+      takes: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { archivoCrudoUrl: true, archivoRenderUrl: true },
+      },
+    },
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
@@ -97,6 +127,70 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
           <p className="text-[12px] text-charcoal mt-1">se unió</p>
         </div>
       </div>
+
+      <h2 className="font-semibold text-[16px] mt-12 mb-4">
+        {esUnoMismo ? "Mis clips" : "Clips publicados"}
+      </h2>
+      {clips.length === 0 ? (
+        <p className="text-charcoal text-[14px]">
+          {esUnoMismo ? (
+            <>
+              Todavía no grabaste nada.{" "}
+              <Link href="/estudio" className="text-volt-blue font-medium underline underline-offset-2">
+                Arrancá en el estudio
+              </Link>
+              .
+            </>
+          ) : (
+            "Todavía no publicó ningún clip."
+          )}
+        </p>
+      ) : (
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {clips.map((c) => {
+            const videoUrl = urlReproducible(c.takes[0]?.archivoRenderUrl ?? c.takes[0]?.archivoCrudoUrl);
+            return (
+              <li key={c.id}>
+                {videoUrl ? (
+                  <video
+                    src={videoUrl}
+                    controls
+                    playsInline
+                    className="w-full aspect-video rounded-lg bg-obsidian object-cover"
+                  />
+                ) : (
+                  <div className="flex aspect-video items-center justify-center rounded-lg bg-mist text-[11px] text-charcoal text-center px-2">
+                    Sin preview disponible
+                  </div>
+                )}
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <Link
+                    href={`/v/${c.interpretacion.video.id}`}
+                    className="text-[11px] text-charcoal hover:text-volt-blue transition-colors truncate"
+                  >
+                    {c.interpretacion.video.titulo}
+                  </Link>
+                  <span className="shrink-0 text-[11px] text-charcoal">❤ {c._count.likes}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span
+                    className={`text-[10px] font-semibold uppercase tracking-[0.05em] ${
+                      c.estado === "PUBLICADO"
+                        ? "text-volt-blue"
+                        : c.estado === "RECHAZADO"
+                          ? "text-charcoal"
+                          : "text-charcoal/70"
+                    }`}
+                  >
+                    {ESTADO_LABEL[c.estado] ?? c.estado}
+                  </span>
+                  {esUnoMismo && <EliminarClipButton clipId={c.id} />}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

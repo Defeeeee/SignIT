@@ -17,4 +17,7 @@ export interface Storage {
   }): Promise<ArchivoGuardado>;
 
   leer(url: string): Promise<{ data: Buffer; contentType: string } | null>;
+
+  // No falla si el archivo ya no existe (idempotente).
+  borrar(url: string): Promise<void>;
 }

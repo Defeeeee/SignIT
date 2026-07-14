@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ArchivoGuardado, Storage } from "./types";
 
@@ -41,15 +41,8 @@ export class LocalDiskStorage implements Storage {
   }
 
   async leer(url: string): Promise<{ data: Buffer; contentType: string } | null> {
-    if (!url.startsWith(MEDIA_PREFIX)) return null;
-    const relativo = url.slice(MEDIA_PREFIX.length);
-    const segments = relativo.split("/");
-    if (segments.some((s) => !s || s === "." || s === "..")) return null;
-
-    const raiz = raizUploads();
-    const rutaArchivo = path.resolve(raiz, ...segments);
-    // Defensa en profundidad: el archivo resuelto debe seguir bajo la raíz de uploads.
-    if (!rutaArchivo.startsWith(raiz + path.sep)) return null;
+    const rutaArchivo = rutaSegura(url);
+    if (!rutaArchivo) return null;
 
     try {
       const [data, metaRaw] = await Promise.all([
@@ -62,4 +55,29 @@ export class LocalDiskStorage implements Storage {
       return null;
     }
   }
+
+  async borrar(url: string): Promise<void> {
+    const rutaArchivo = rutaSegura(url);
+    if (!rutaArchivo) return;
+
+    await Promise.all([
+      rm(rutaArchivo, { force: true }),
+      rm(`${rutaArchivo}.meta.json`, { force: true }),
+    ]);
+  }
+}
+
+// Resuelve la URL servible a una ruta de disco, validando que no escape la
+// raíz de uploads. Devuelve null si la URL no pertenece a este storage.
+function rutaSegura(url: string): string | null {
+  if (!url.startsWith(MEDIA_PREFIX)) return null;
+  const relativo = url.slice(MEDIA_PREFIX.length);
+  const segments = relativo.split("/");
+  if (segments.some((s) => !s || s === "." || s === "..")) return null;
+
+  const raiz = raizUploads();
+  const rutaArchivo = path.resolve(raiz, ...segments);
+  if (!rutaArchivo.startsWith(raiz + path.sep)) return null;
+
+  return rutaArchivo;
 }

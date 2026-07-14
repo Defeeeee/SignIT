@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "@/server/trpc";
 import { processingPipeline } from "@/server/processing";
+import { storage } from "@/server/storage";
 
 const HUECO_MAX_SEGUNDOS = 10; // regla 5.1
 
@@ -195,6 +196,32 @@ export const clipRouter = router({
         where: { id: input.clipId },
         data: { estado: "BORRADOR", motivoRechazo: null },
       });
+    }),
+
+  // Borrado del propio clip, en cualquier estado — el dueño del contenido
+  // puede sacarlo cuando quiera. Limpia los archivos en storage además de
+  // la fila (Take/Keypoints/Hueco/etc. caen por cascade en la DB).
+  eliminar: protectedProcedure
+    .input(z.object({ clipId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const clip = await assertDueño(ctx.db, input.clipId, ctx.session.user.id);
+
+      const takes = await ctx.db.take.findMany({
+        where: { clipId: clip.id },
+        select: { archivoCrudoUrl: true, archivoRenderUrl: true },
+      });
+
+      await ctx.db.$transaction([
+        ctx.db.descarga.deleteMany({ where: { clipId: clip.id } }),
+        ctx.db.clip.delete({ where: { id: clip.id } }),
+      ]);
+
+      const urls = takes
+        .flatMap((t) => [t.archivoCrudoUrl, t.archivoRenderUrl])
+        .filter((u): u is string => !!u);
+      await Promise.all(urls.map((u) => storage.borrar(u)));
+
+      return { ok: true };
     }),
 
   // 3.4 Moderación MVP: revisión manual, SLA 24h
