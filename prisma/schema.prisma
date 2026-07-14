@@ -101,6 +101,9 @@ model User {
   comentarios      Comentario[]
   descargas        Descarga[]
   reportes         Reporte[]
+  likes            Like[]
+  siguiendo        Follow[] @relation("Siguiendo") // a quién sigue este usuario
+  seguidores       Follow[] @relation("Seguidores") // quién sigue a este usuario
 
   @@map("usuarios")
 }
@@ -219,6 +222,7 @@ model Clip {
   descargas   Descarga[]
   reportes    Reporte[]
   pedidos     PedidoClip[]
+  likes       Like[]
 
   @@index([interpretacionId])
   @@index([estado])
@@ -309,6 +313,34 @@ model PedidoClip {
   clip     Clip   @relation(fields: [clipId], references: [id], onDelete: Cascade)
 
   @@id([pedidoId, clipId])
+}
+
+// Grafo social: feed "siguiendo" vs "para ti". seguidorId == seguidoId
+// (auto-seguirse) se valida en el router, no acá.
+model Follow {
+  seguidorId String
+  seguidor   User   @relation("Siguiendo", fields: [seguidorId], references: [id], onDelete: Cascade)
+  seguidoId  String
+  seguido    User   @relation("Seguidores", fields: [seguidoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([seguidorId, seguidoId])
+  @@index([seguidoId])
+}
+
+// Likes sobre clips (spec 4.5: reacciones) — el feed son clips individuales,
+// no videos, así que el like va sobre el clip.
+model Like {
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  clipId    String
+  clip      Clip   @relation(fields: [clipId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([usuarioId, clipId])
+  @@index([clipId])
 }
 
 model Comentario {
