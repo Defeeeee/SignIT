@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
+import { PlayIcon, UsersIcon, PlusCircleIcon } from "@/components/icons";
 
 const ORIGEN_LABEL: Record<string, string> = {
   YOUTUBE: "YouTube",
@@ -103,13 +104,19 @@ export default async function FeedPage() {
                   {ORIGEN_LABEL[v.origen] ?? v.origen}
                 </span>
 
+                <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-obsidian shadow-lg">
+                    <PlayIcon width={20} height={20} className="ml-0.5" />
+                  </span>
+                </span>
+
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <p className="font-semibold text-[15px] leading-snug line-clamp-2 text-white">
                     {v.titulo}
                   </p>
                   <p className="text-[12px] text-white/70 mt-1">{v.canal ?? v.origen}</p>
                   <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-white">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-volt-blue" />
+                    <UsersIcon width={13} height={13} />
                     {v._count.interpretaciones} interpretación(es)
                   </div>
                 </div>
@@ -120,9 +127,7 @@ export default async function FeedPage() {
               href={ctaHref}
               className="group flex aspect-video flex-col items-center justify-center gap-2.5 rounded-2xl border border-dashed border-ash text-center text-charcoal transition-colors hover:border-volt-blue hover:bg-volt-blue/5 hover:text-volt-blue"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-current text-[20px] leading-none transition-transform group-hover:scale-110">
-                +
-              </span>
+              <PlusCircleIcon width={32} height={32} className="transition-transform group-hover:scale-110" />
               <span className="text-[14px] font-medium px-6">{ctaLabel}</span>
             </Link>
           </div>

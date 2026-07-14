@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { trpc } from "@/trpc/client";
+import { CommentIcon, ArrowUpIcon } from "@/components/icons";
 
 function tiempoRelativo(fecha: Date | string): string {
   const minutos = Math.floor((Date.now() - new Date(fecha).getTime()) / 60000);
@@ -67,9 +68,10 @@ function NuevoComentarioForm({
       <button
         type="submit"
         disabled={crear.isPending || !texto.trim()}
-        className="rounded-xl bg-volt-blue text-white font-semibold px-4 py-2 text-[14px] transition-colors hover:bg-volt-blue-hover disabled:opacity-50"
+        title="Enviar"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-volt-blue text-white transition-all hover:bg-volt-blue-hover hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
       >
-        Enviar
+        <ArrowUpIcon width={16} height={16} className="rotate-90" />
       </button>
     </form>
   );
@@ -82,7 +84,8 @@ export function Comentarios({ videoId }: { videoId: string }) {
 
   return (
     <div className="mt-12">
-      <h2 className="font-semibold text-[18px] mb-4">
+      <h2 className="font-semibold text-[18px] mb-4 flex items-center gap-2">
+        <CommentIcon width={18} height={18} />
         Comentarios {comentarios ? `(${comentarios.length})` : ""}
       </h2>
 
@@ -114,19 +117,21 @@ export function Comentarios({ videoId }: { videoId: string }) {
             <div className="flex gap-3">
               <Avatar image={c.autor.image} handle={c.autor.handle} />
               <div className="flex-1 min-w-0">
-                <p className="text-[13px]">
-                  <span className="font-semibold">@{c.autor.handle}</span>{" "}
-                  <span className="text-charcoal">{tiempoRelativo(c.createdAt)}</span>
-                </p>
-                <p className="text-[14px] mt-0.5 break-words">{c.contenidoTexto}</p>
-                {status === "authenticated" && (
-                  <button
-                    onClick={() => setRespondiendoA(respondiendoA === c.id ? null : c.id)}
-                    className="text-[12px] font-medium text-volt-blue mt-1"
-                  >
-                    Responder
-                  </button>
-                )}
+                <div className="rounded-2xl bg-mist px-3.5 py-2.5 inline-block max-w-full">
+                  <p className="text-[13px] font-semibold">@{c.autor.handle}</p>
+                  <p className="text-[14px] mt-0.5 break-words">{c.contenidoTexto}</p>
+                </div>
+                <div className="flex items-center gap-3 mt-1 ml-1">
+                  <span className="text-[11px] text-charcoal">{tiempoRelativo(c.createdAt)}</span>
+                  {status === "authenticated" && (
+                    <button
+                      onClick={() => setRespondiendoA(respondiendoA === c.id ? null : c.id)}
+                      className="text-[11px] font-semibold text-volt-blue"
+                    >
+                      Responder
+                    </button>
+                  )}
+                </div>
 
                 {respondiendoA === c.id && (
                   <div className="mt-2">
@@ -146,11 +151,11 @@ export function Comentarios({ videoId }: { videoId: string }) {
                       <li key={h.id} className="flex gap-3">
                         <Avatar image={h.autor.image} handle={h.autor.handle} />
                         <div className="min-w-0">
-                          <p className="text-[13px]">
-                            <span className="font-semibold">@{h.autor.handle}</span>{" "}
-                            <span className="text-charcoal">{tiempoRelativo(h.createdAt)}</span>
-                          </p>
-                          <p className="text-[14px] mt-0.5 break-words">{h.contenidoTexto}</p>
+                          <div className="rounded-2xl bg-mist px-3.5 py-2.5 inline-block max-w-full">
+                            <p className="text-[13px] font-semibold">@{h.autor.handle}</p>
+                            <p className="text-[14px] mt-0.5 break-words">{h.contenidoTexto}</p>
+                          </div>
+                          <p className="text-[11px] text-charcoal mt-1 ml-1">{tiempoRelativo(h.createdAt)}</p>
                         </div>
                       </li>
                     ))}

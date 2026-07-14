@@ -27,7 +27,21 @@ export const pedidoRouter = router({
         where: { estado: input.estado },
         include: { video: true, autor: { select: { handle: true } }, _count: { select: { votos: true } } },
       });
-      return pedidos.sort((a, b) => b._count.votos - a._count.votos);
+
+      const votadosPorMi = ctx.session?.user
+        ? new Set(
+            (
+              await ctx.db.pedidoVoto.findMany({
+                where: { userId: ctx.session.user.id, pedidoId: { in: pedidos.map((p) => p.id) } },
+                select: { pedidoId: true },
+              })
+            ).map((v) => v.pedidoId),
+          )
+        : new Set<string>();
+
+      return pedidos
+        .map((p) => ({ ...p, yaVotado: votadosPorMi.has(p.id) }))
+        .sort((a, b) => b._count.votos - a._count.votos);
     }),
 
   votar: protectedProcedure.input(z.object({ pedidoId: z.string() })).mutation(async ({ ctx, input }) => {

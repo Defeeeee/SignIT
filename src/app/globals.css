@@ -37,3 +37,19 @@ body {
   background: var(--color-volt-blue);
   color: var(--color-paper);
 }
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pop {
+  animation: pop 0.25s ease-out;
+}

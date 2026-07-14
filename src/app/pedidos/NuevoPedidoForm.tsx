@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { trpc } from "@/trpc/client";
+import { MegaphoneIcon } from "@/components/icons";
 
 export function NuevoPedidoForm() {
   const { status } = useSession();
@@ -41,8 +42,9 @@ export function NuevoPedidoForm() {
       <button
         type="submit"
         disabled={crear.isPending}
-        className="rounded-xl bg-volt-blue text-white font-semibold px-5 py-2.5 text-[14px] transition-colors hover:bg-volt-blue-hover disabled:opacity-50"
+        className="flex items-center gap-2 rounded-xl bg-volt-blue text-white font-semibold px-5 py-2.5 text-[14px] transition-all hover:bg-volt-blue-hover hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
       >
+        <MegaphoneIcon width={16} height={16} />
         Pedir
       </button>
     </form>

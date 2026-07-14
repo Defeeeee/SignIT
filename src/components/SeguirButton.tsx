@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { trpc } from "@/trpc/client";
+import { PersonPlusIcon, PersonCheckIcon } from "@/components/icons";
 
-const btnBase = "rounded-full px-5 py-2 text-[14px] font-semibold transition-colors disabled:opacity-60";
+const btnBase =
+  "flex items-center gap-2 rounded-full px-5 py-2 text-[14px] font-semibold transition-all hover:scale-[1.03] disabled:opacity-60 disabled:hover:scale-100";
 
 export function SeguirButton({
   usuarioId,
@@ -26,6 +28,7 @@ export function SeguirButton({
   if (!logueado) {
     return (
       <Link href="/login" className={`${btnBase} bg-volt-blue text-white hover:bg-volt-blue-hover`}>
+        <PersonPlusIcon width={16} height={16} />
         Seguir
       </Link>
     );
@@ -44,6 +47,7 @@ export function SeguirButton({
           : `${btnBase} bg-volt-blue text-white hover:bg-volt-blue-hover`
       }
     >
+      {siguiendo ? <PersonCheckIcon width={16} height={16} /> : <PersonPlusIcon width={16} height={16} />}
       {siguiendo ? "Siguiendo" : "Seguir"}
     </button>
   );

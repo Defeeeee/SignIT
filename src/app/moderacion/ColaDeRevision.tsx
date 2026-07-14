@@ -6,6 +6,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import { trpc } from "@/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
 import { urlReproducible } from "@/lib/media";
+import { CheckIcon, XIcon } from "@/components/icons";
 
 type Clip = inferRouterOutputs<AppRouter>["clip"]["colaDeRevision"][number];
 
@@ -86,15 +87,17 @@ function ClipCard({
           <button
             disabled={isPending}
             onClick={() => onModerar({ clipId: clip.id, decision: "PUBLICADO" })}
-            className="rounded-xl bg-volt-blue text-white font-semibold px-5 py-2 text-[14px] transition-colors hover:bg-volt-blue-hover disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-volt-blue text-white font-semibold px-5 py-2 text-[14px] transition-all hover:bg-volt-blue-hover hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
           >
+            <CheckIcon width={16} height={16} />
             Aprobar
           </button>
           <button
             disabled={isPending}
             onClick={() => setRechazando(true)}
-            className="rounded-xl border border-charcoal px-5 py-2 text-[14px] font-medium transition-colors hover:bg-mist disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-charcoal px-5 py-2 text-[14px] font-medium transition-colors hover:bg-mist disabled:opacity-50"
           >
+            <XIcon width={16} height={16} />
             Rechazar
           </button>
         </div>

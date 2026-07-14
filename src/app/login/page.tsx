@@ -1,4 +1,5 @@
 import { signIn } from "@/server/auth";
+import { GoogleIcon, MailIcon, ArrowUpIcon } from "@/components/icons";
 
 export default function LoginPage() {
   const googleHabilitado = Boolean(process.env.AUTH_GOOGLE_ID);
@@ -22,7 +23,8 @@ export default function LoginPage() {
             }}
             className="mb-3"
           >
-            <button className="w-full rounded-xl bg-onyx text-white font-medium py-2.5 text-[14px] transition-colors hover:bg-obsidian">
+            <button className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-onyx text-white font-medium py-2.5 text-[14px] transition-all hover:bg-obsidian hover:scale-[1.01]">
+              <GoogleIcon />
               Continuar con Google
             </button>
           </form>
@@ -35,14 +37,18 @@ export default function LoginPage() {
           }}
           className="flex flex-col gap-2.5"
         >
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="tu@email.com"
-            className="rounded-xl border border-charcoal bg-mist px-3.5 py-2.5 text-[14px] placeholder:text-charcoal/70 focus:outline-none focus:ring-2 focus:ring-volt-blue"
-          />
-          <button className="rounded-xl bg-volt-blue text-white font-semibold py-2.5 text-[14px] transition-colors hover:bg-volt-blue-hover">
+          <div className="relative">
+            <MailIcon width={16} height={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal" />
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="tu@email.com"
+              className="w-full rounded-xl border border-charcoal bg-mist pl-10 pr-3.5 py-2.5 text-[14px] placeholder:text-charcoal/70 focus:outline-none focus:ring-2 focus:ring-volt-blue"
+            />
+          </div>
+          <button className="flex items-center justify-center gap-2 rounded-xl bg-volt-blue text-white font-semibold py-2.5 text-[14px] transition-all hover:bg-volt-blue-hover hover:scale-[1.01]">
+            <ArrowUpIcon width={16} height={16} className="rotate-90" />
             Enviar magic link
           </button>
         </form>

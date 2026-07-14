@@ -4,7 +4,9 @@ import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { SeguirButton } from "@/components/SeguirButton";
 import { EliminarClipButton } from "@/components/EliminarClipButton";
+import { LikeButton } from "@/components/LikeButton";
 import { urlReproducible } from "@/lib/media";
+import { VideoIcon, UsersIcon, PersonPlusIcon, CalendarIcon, CheckIcon, GearIcon } from "@/components/icons";
 
 const ESTADO_LABEL: Record<string, string> = {
   GRABANDO: "Grabando",
@@ -14,6 +16,16 @@ const ESTADO_LABEL: Record<string, string> = {
   PUBLICADO: "Publicado",
   RECHAZADO: "Rechazado",
 };
+
+function StatCard({ icon: Icon, value, label }: { icon: (p: { className?: string }) => React.ReactElement; value: string | number; label: string }) {
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-[0_0_0_1px_var(--color-ash)] transition-shadow hover:shadow-[0_0_0_1px_var(--color-ash),0_1px_16px_0_rgba(0,0,0,0.06)]">
+      <Icon className="text-volt-blue mb-2" />
+      <p className="font-display text-[24px] leading-none">{value}</p>
+      <p className="text-[11px] text-charcoal mt-1.5">{label}</p>
+    </div>
+  );
+}
 
 export default async function PerfilPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -66,29 +78,42 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
     },
   });
 
+  const clipIdsLikeados = session?.user
+    ? new Set(
+        (
+          await db.like.findMany({
+            where: { usuarioId: session.user.id, clipId: { in: clips.map((c) => c.id) } },
+            select: { clipId: true },
+          })
+        ).map((l) => l.clipId),
+      )
+    : new Set<string>();
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
-          {usuario.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={usuario.image}
-              alt={usuario.handle}
-              className="w-16 h-16 rounded-full shadow-[0_0_0_1px_var(--color-ash)]"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-mist shadow-[0_0_0_1px_var(--color-ash)]" />
-          )}
+          <div className="relative shrink-0">
+            {usuario.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={usuario.image}
+                alt={usuario.handle}
+                className="w-16 h-16 rounded-full ring-2 ring-volt-blue/20"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-mist ring-2 ring-volt-blue/20 flex items-center justify-center font-display text-[22px] text-charcoal">
+                {usuario.nombre[0]?.toUpperCase()}
+              </div>
+            )}
+            {usuario.senanteVerificado && (
+              <span className="absolute -right-0.5 -bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-volt-blue text-white ring-2 ring-paper">
+                <CheckIcon width={11} height={11} strokeWidth={3} />
+              </span>
+            )}
+          </div>
           <div>
-            <h1 className="font-display text-[22px] leading-tight flex items-center gap-2">
-              {usuario.nombre}
-              {usuario.senanteVerificado && (
-                <span className="text-[11px] font-sans font-semibold uppercase tracking-[0.05em] rounded-full bg-volt-blue/10 text-volt-blue px-2.5 py-1">
-                  Señante verificado
-                </span>
-              )}
-            </h1>
+            <h1 className="font-display text-[22px] leading-tight">{usuario.nombre}</h1>
             <p className="text-charcoal text-[14px] mt-1">
               @{usuario.handle} {usuario.region ? `· ${usuario.region}` : ""}
             </p>
@@ -98,8 +123,9 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
         {esUnoMismo ? (
           <Link
             href="/ajustes"
-            className="rounded-full border border-charcoal px-5 py-2 text-[14px] font-medium transition-colors hover:bg-mist"
+            className="flex items-center gap-2 rounded-full border border-charcoal px-5 py-2 text-[14px] font-medium transition-colors hover:bg-mist"
           >
+            <GearIcon width={16} height={16} />
             Editar perfil
           </Link>
         ) : (
@@ -107,25 +133,15 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
         )}
       </div>
 
-      <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-        <div className="rounded-xl bg-white p-5 shadow-[0_0_0_1px_var(--color-ash)]">
-          <p className="font-display text-[28px]">{usuario._count.interpretaciones}</p>
-          <p className="text-[12px] text-charcoal mt-1">interpretaciones</p>
-        </div>
-        <div className="rounded-xl bg-white p-5 shadow-[0_0_0_1px_var(--color-ash)]">
-          <p className="font-display text-[28px]">{usuario._count.seguidores}</p>
-          <p className="text-[12px] text-charcoal mt-1">seguidores</p>
-        </div>
-        <div className="rounded-xl bg-white p-5 shadow-[0_0_0_1px_var(--color-ash)]">
-          <p className="font-display text-[28px]">{usuario._count.siguiendo}</p>
-          <p className="text-[12px] text-charcoal mt-1">siguiendo</p>
-        </div>
-        <div className="rounded-xl bg-white p-5 shadow-[0_0_0_1px_var(--color-ash)]">
-          <p className="font-display text-[28px]">
-            {new Date(usuario.createdAt).toLocaleDateString("es-AR", { year: "numeric", month: "short" })}
-          </p>
-          <p className="text-[12px] text-charcoal mt-1">se unió</p>
-        </div>
+      <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard icon={VideoIcon} value={usuario._count.interpretaciones} label="interpretaciones" />
+        <StatCard icon={UsersIcon} value={usuario._count.seguidores} label="seguidores" />
+        <StatCard icon={PersonPlusIcon} value={usuario._count.siguiendo} label="siguiendo" />
+        <StatCard
+          icon={CalendarIcon}
+          value={new Date(usuario.createdAt).toLocaleDateString("es-AR", { year: "numeric", month: "short" })}
+          label="se unió"
+        />
       </div>
 
       <h2 className="font-semibold text-[16px] mt-12 mb-4">
@@ -150,19 +166,24 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
           {clips.map((c) => {
             const videoUrl = urlReproducible(c.takes[0]?.archivoRenderUrl ?? c.takes[0]?.archivoCrudoUrl);
             return (
-              <li key={c.id}>
-                {videoUrl ? (
-                  <video
-                    src={videoUrl}
-                    controls
-                    playsInline
-                    className="w-full aspect-video rounded-lg bg-obsidian object-cover"
-                  />
-                ) : (
-                  <div className="flex aspect-video items-center justify-center rounded-lg bg-mist text-[11px] text-charcoal text-center px-2">
-                    Sin preview disponible
-                  </div>
-                )}
+              <li key={c.id} className="group">
+                <div className="relative overflow-hidden rounded-lg bg-obsidian">
+                  {videoUrl ? (
+                    <video src={videoUrl} controls playsInline className="w-full aspect-video object-cover" />
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center bg-mist text-[11px] text-charcoal text-center px-2">
+                      Sin preview disponible
+                    </div>
+                  )}
+                  <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-black/60 backdrop-blur px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-white">
+                    {ESTADO_LABEL[c.estado] ?? c.estado}
+                  </span>
+                  {esUnoMismo && (
+                    <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <EliminarClipButton clipId={c.id} />
+                    </div>
+                  )}
+                </div>
                 <div className="mt-1.5 flex items-center justify-between gap-2">
                   <Link
                     href={`/v/${c.interpretacion.video.id}`}
@@ -170,21 +191,12 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
                   >
                     {c.interpretacion.video.titulo}
                   </Link>
-                  <span className="shrink-0 text-[11px] text-charcoal">❤ {c._count.likes}</span>
-                </div>
-                <div className="mt-1 flex items-center justify-between gap-2">
-                  <span
-                    className={`text-[10px] font-semibold uppercase tracking-[0.05em] ${
-                      c.estado === "PUBLICADO"
-                        ? "text-volt-blue"
-                        : c.estado === "RECHAZADO"
-                          ? "text-charcoal"
-                          : "text-charcoal/70"
-                    }`}
-                  >
-                    {ESTADO_LABEL[c.estado] ?? c.estado}
-                  </span>
-                  {esUnoMismo && <EliminarClipButton clipId={c.id} />}
+                  <LikeButton
+                    clipId={c.id}
+                    meGustaInicial={clipIdsLikeados.has(c.id)}
+                    totalInicial={c._count.likes}
+                    logueado={!!session?.user}
+                  />
                 </div>
               </li>
             );
