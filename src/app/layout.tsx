@@ -3,6 +3,7 @@ import { Nunito } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { TRPCProvider } from "@/trpc/Provider";
 import { NavBar } from "@/components/NavBar";
+import { BottomNav } from "@/components/BottomNav";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -26,7 +27,8 @@ export default function RootLayout({
         <SessionProvider>
           <TRPCProvider>
             <NavBar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-16 sm:pb-0">{children}</main>
+            <BottomNav />
           </TRPCProvider>
         </SessionProvider>
       </body>

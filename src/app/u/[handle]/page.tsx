@@ -7,6 +7,7 @@ import { EliminarClipButton } from "@/components/EliminarClipButton";
 import { LikeButton } from "@/components/LikeButton";
 import { urlReproducible } from "@/lib/media";
 import { VideoIcon, UsersIcon, PersonPlusIcon, CalendarIcon, CheckIcon, GearIcon } from "@/components/icons";
+import { AvatarRing } from "@/components/AvatarRing";
 
 const ESTADO_LABEL: Record<string, string> = {
   GRABANDO: "Grabando",
@@ -94,18 +95,12 @@ export default async function PerfilPage({ params }: { params: Promise<{ handle:
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
-            {usuario.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={usuario.image}
-                alt={usuario.handle}
-                className="w-16 h-16 rounded-full ring-2 ring-volt-blue/20"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-mist ring-2 ring-volt-blue/20 flex items-center justify-center font-display text-[22px] text-charcoal">
-                {usuario.nombre[0]?.toUpperCase()}
-              </div>
-            )}
+            <AvatarRing
+              src={usuario.image}
+              alt={usuario.handle}
+              size={72}
+              fallback={usuario.nombre[0]?.toUpperCase() ?? "?"}
+            />
             {usuario.senanteVerificado && (
               <span className="absolute -right-0.5 -bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-volt-blue text-white ring-2 ring-paper">
                 <CheckIcon width={11} height={11} strokeWidth={3} />

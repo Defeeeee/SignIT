@@ -69,9 +69,20 @@ export function UserIcon(props: IconProps) {
 export function GearIcon(props: IconProps) {
   return (
     <Base {...props}>
-      <circle cx="12" cy="12" r="3.2" />
-      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-        <line key={angle} x1="12" y1="2.6" x2="12" y2="5.2" transform={`rotate(${angle} 12 12)`} />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2.3" />
+      {[0, 60, 120, 180, 240, 300].map((angle) => (
+        <rect
+          key={angle}
+          x="10.6"
+          y="2.6"
+          width="2.8"
+          height="2.8"
+          rx="0.6"
+          fill="currentColor"
+          stroke="none"
+          transform={`rotate(${angle} 12 12)`}
+        />
       ))}
     </Base>
   );

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import icon from "../../public/icon-signit.png";
 import { HomeIcon, MegaphoneIcon, PlusCircleIcon, ShieldIcon, GearIcon, LogOutIcon } from "@/components/icons";
+import { AvatarRing } from "@/components/AvatarRing";
 
 function NavLink({
   href,
@@ -48,7 +49,7 @@ export function NavBar() {
             </span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1">
             <NavLink href="/" active={pathname === "/"} icon={HomeIcon} label="Videos" />
             <NavLink href="/pedidos" active={pathname === "/pedidos"} icon={MegaphoneIcon} label="Pedidos" />
             {status === "authenticated" && (
@@ -75,18 +76,15 @@ export function NavBar() {
                 <Link
                   href={`/u/${session.user.handle}`}
                   title={`@${session.user.handle}`}
-                  className={`shrink-0 rounded-full transition-all hover:scale-105 ${
-                    pathname === `/u/${session.user.handle}` ? "ring-2 ring-white" : "ring-1 ring-white/20"
-                  }`}
+                  className="shrink-0 transition-transform hover:scale-105"
                 >
-                  {session.user.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={session.user.image} alt="" className="h-8 w-8 rounded-full" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white text-[12px] font-semibold">
-                      {session.user.handle?.[0]?.toUpperCase()}
-                    </div>
-                  )}
+                  <AvatarRing
+                    src={session.user.image}
+                    alt=""
+                    size={32}
+                    gap="var(--color-obsidian)"
+                    fallback={session.user.handle?.[0]?.toUpperCase() ?? "?"}
+                  />
                 </Link>
                 <Link
                   href="/ajustes"
